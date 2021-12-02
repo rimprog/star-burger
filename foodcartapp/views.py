@@ -7,6 +7,9 @@ from .models import Product
 from .models import Order
 from .models import OrderItems
 
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
 
 def banners_list_api(request):
     # FIXME move data to db?
@@ -60,32 +63,28 @@ def product_list_api(request):
     })
 
 
+@api_view(['POST'])
 def register_order(request):
-    try:
-        order_raw = json.loads(request.body.decode())
+    order_raw = request.data
 
-        order = Order.objects.create(
-            address=order_raw['address'],
-            name=order_raw['firstname'],
-            surname=order_raw['lastname'],
-            phone=order_raw['phonenumber']
+    order = Order.objects.create(
+        address=order_raw['address'],
+        name=order_raw['firstname'],
+        surname=order_raw['lastname'],
+        phone=order_raw['phonenumber']
+    )
+
+    for product_raw in order_raw['products']:
+        product = Product.objects.get(id=product_raw['product'])
+
+        OrderItems.objects.create(
+            order=order,
+            product=product,
+            count=product_raw['quantity']
         )
 
-        for product_raw in order_raw['products']:
-            product = Product.objects.get(id=product_raw['product'])
-
-            OrderItems.objects.create(
-                order=order,
-                product=product,
-                count=product_raw['quantity']
-            )
-
-        return JsonResponse({
-            'status': 'ok'
-        })
-
-    except ValueError:
-        return JsonResponse({
-            'status': 'error',
-            'error': 'Order not created',
-        })
+    return Response({
+        'status': 'ok',
+        'action': 'order_created',
+        'order': order_raw
+    })
