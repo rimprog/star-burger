@@ -7,6 +7,7 @@ from .models import Product
 from .models import Order
 from .models import OrderItems
 
+from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
@@ -63,9 +64,35 @@ def product_list_api(request):
     })
 
 
+def validate_order_raw(order_raw):
+    is_valid = True
+
+    try:
+        product = order_raw['products']
+    except KeyError:
+        is_valid = False
+
+        return is_valid
+
+    if isinstance(product, str):
+        is_valid = False
+    elif product is None:
+        is_valid = False
+    elif isinstance(product, list) and not product:
+        is_valid = False
+
+    return is_valid
+
+
 @api_view(['POST'])
 def register_order(request):
     order_raw = request.data
+    is_valid = validate_order_raw(order_raw)
+
+    if not is_valid:
+        content = {'error': 'products key not presented or not list'}
+
+        return Response(content, status=status.HTTP_200_OK)
 
     order = Order.objects.create(
         address=order_raw['address'],
@@ -83,8 +110,6 @@ def register_order(request):
             count=product_raw['quantity']
         )
 
-    return Response({
-        'status': 'ok',
-        'action': 'order_created',
-        'order': order_raw
-    })
+    content = {'order': order_raw}
+
+    return Response(content, status=status.HTTP_200_OK)
