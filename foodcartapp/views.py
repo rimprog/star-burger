@@ -92,7 +92,7 @@ def register_order(request):
     if not is_valid:
         content = {'error': 'products key not presented or not list'}
 
-        return Response(content, status=status.HTTP_200_OK)
+        return Response(content, status=status.HTTP_403_FORBIDDEN)
 
     order = Order.objects.create(
         address=order_raw['address'],
