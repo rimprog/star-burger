@@ -11,6 +11,8 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
+import phonenumbers
+
 
 def banners_list_api(request):
     # FIXME move data to db?
@@ -64,34 +66,101 @@ def product_list_api(request):
     })
 
 
-def validate_order_raw(order_raw):
+def validate_products(order_raw):
     is_valid = True
 
     try:
-        product = order_raw['products']
+        products = order_raw['products']
+
+        if not isinstance(products, list):
+            is_valid = False
+        elif not products:
+            is_valid = False
+
     except KeyError:
-        is_valid = False
-
-        return is_valid
-
-    if isinstance(product, str):
-        is_valid = False
-    elif product is None:
-        is_valid = False
-    elif isinstance(product, list) and not product:
         is_valid = False
 
     return is_valid
 
 
+def validate_product_in_products(order_raw):
+    is_valid = True
+
+    try:
+        for product_raw in order_raw['products']:
+            product = Product.objects.get(id=product_raw['product'])
+
+    except Product.DoesNotExist:
+        is_valid = False
+
+    return is_valid
+
+
+def validate_phonenumber(order_raw):
+    is_valid = True
+
+    try:
+        phonenumber = phonenumbers.parse(order_raw['phonenumber'], 'RU')
+
+        if not phonenumbers.is_valid_number(phonenumber):
+            is_valid = False
+
+    except KeyError:
+        is_valid = False
+
+    except phonenumbers.phonenumberutil.NumberParseException:
+        is_valid = False
+
+    return is_valid
+
+
+def validate_string_input(order_raw, key):
+    is_valid = True
+
+    try:
+        string_input = order_raw[key]
+
+        if not isinstance(string_input, str):
+            is_valid = False
+
+    except KeyError:
+        is_valid = False
+
+    return is_valid
+
+
+def validate_order_raw(order_raw):
+    is_valid = True
+    content = {}
+
+    if not validate_products(order_raw):
+        is_valid = False
+        content = {'error': 'products key not presented or not list'}
+    elif not validate_product_in_products(order_raw):
+        is_valid = False
+        content = {'error': 'product does not exist'}
+    elif not validate_phonenumber(order_raw):
+        is_valid = False
+        content = {'error': 'phonenumber key not presented or not valid (Required phonenumber format: +79999000565)'}
+    elif not validate_string_input(order_raw, 'firstname'):
+        is_valid = False
+        content = {'error': 'firstname key not presented or not str'}
+    elif not validate_string_input(order_raw, 'lastname'):
+        is_valid = False
+        content = {'error': 'lastname key not presented or not str'}
+    elif not validate_string_input(order_raw, 'address'):
+        is_valid = False
+        content = {'error': 'address key not presented or not str'}
+
+    return is_valid, content
+
+
 @api_view(['POST'])
 def register_order(request):
     order_raw = request.data
-    is_valid = validate_order_raw(order_raw)
 
+    is_valid, content = validate_order_raw(order_raw)
     if not is_valid:
-        content = {'error': 'products key not presented or not list'}
-
         return Response(content, status=status.HTTP_403_FORBIDDEN)
 
     order = Order.objects.create(
