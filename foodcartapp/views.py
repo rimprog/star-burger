@@ -5,11 +5,12 @@ from django.templatetags.static import static
 
 from .models import Product
 from .models import Order
-from .models import OrderItems
+from .models import OrderProduct
 
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.serializers import ModelSerializer
 
 import phonenumbers
 
@@ -66,119 +67,39 @@ def product_list_api(request):
     })
 
 
-def validate_products(order_raw):
-    is_valid = True
-
-    try:
-        products = order_raw['products']
-
-        if not isinstance(products, list):
-            is_valid = False
-        elif not products:
-            is_valid = False
-
-    except KeyError:
-        is_valid = False
-
-    return is_valid
+class OrderProductSerializer(ModelSerializer):
+    class Meta:
+        model = OrderProduct
+        fields = ['product', 'quantity']
 
 
-def validate_product_in_products(order_raw):
-    is_valid = True
+class OrderSerializer(ModelSerializer):
+    products = OrderProductSerializer(many=True, allow_empty=False)
 
-    try:
-        for product_raw in order_raw['products']:
-            product = Product.objects.get(id=product_raw['product'])
-
-    except Product.DoesNotExist:
-        is_valid = False
-
-    return is_valid
-
-
-def validate_phonenumber(order_raw):
-    is_valid = True
-
-    try:
-        phonenumber = phonenumbers.parse(order_raw['phonenumber'], 'RU')
-
-        if not phonenumbers.is_valid_number(phonenumber):
-            is_valid = False
-
-    except KeyError:
-        is_valid = False
-
-    except phonenumbers.phonenumberutil.NumberParseException:
-        is_valid = False
-
-    return is_valid
-
-
-def validate_string_input(order_raw, key):
-    is_valid = True
-
-    try:
-        string_input = order_raw[key]
-
-        if not isinstance(string_input, str):
-            is_valid = False
-
-    except KeyError:
-        is_valid = False
-
-    return is_valid
-
-
-def validate_order_raw(order_raw):
-    is_valid = True
-    content = {}
-
-    if not validate_products(order_raw):
-        is_valid = False
-        content = {'error': 'products key not presented or not list'}
-    elif not validate_product_in_products(order_raw):
-        is_valid = False
-        content = {'error': 'product does not exist'}
-    elif not validate_phonenumber(order_raw):
-        is_valid = False
-        content = {'error': 'phonenumber key not presented or not valid (Required phonenumber format: +79999000565)'}
-    elif not validate_string_input(order_raw, 'firstname'):
-        is_valid = False
-        content = {'error': 'firstname key not presented or not str'}
-    elif not validate_string_input(order_raw, 'lastname'):
-        is_valid = False
-        content = {'error': 'lastname key not presented or not str'}
-    elif not validate_string_input(order_raw, 'address'):
-        is_valid = False
-        content = {'error': 'address key not presented or not str'}
-
-    return is_valid, content
+    class Meta:
+        model = Order
+        fields = ['address', 'firstname', 'lastname', 'phonenumber', 'products']
 
 
 @api_view(['POST'])
 def register_order(request):
-    order_raw = request.data
-
-    is_valid, content = validate_order_raw(order_raw)
-    if not is_valid:
-        return Response(content, status=status.HTTP_403_FORBIDDEN)
+    serializer = OrderSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
 
     order = Order.objects.create(
-        address=order_raw['address'],
-        name=order_raw['firstname'],
-        surname=order_raw['lastname'],
-        phone=order_raw['phonenumber']
+        address=serializer.validated_data['address'],
+        firstname=serializer.validated_data['firstname'],
+        lastname=serializer.validated_data['lastname'],
+        phonenumber=serializer.validated_data['phonenumber']
     )
 
-    for product_raw in order_raw['products']:
-        product = Product.objects.get(id=product_raw['product'])
-
-        OrderItems.objects.create(
+    for product_validated in serializer.validated_data['products']:
+        OrderProduct.objects.create(
             order=order,
-            product=product,
-            count=product_raw['quantity']
+            product=product_validated['product'],
+            quantity=product_validated['quantity']
         )
 
-    content = {'order': order_raw}
+    content = {'order_id': order.id}
 
     return Response(content, status=status.HTTP_200_OK)

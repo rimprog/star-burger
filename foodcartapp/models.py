@@ -130,15 +130,15 @@ class Order(models.Model):
         'адрес',
         max_length=100,
     )
-    name = models.CharField(
+    firstname = models.CharField(
         'имя',
         max_length=50,
     )
-    surname = models.CharField(
+    lastname = models.CharField(
         'фамилия',
         max_length=50,
     )
-    phone = PhoneNumberField(
+    phonenumber = PhoneNumberField(
         'мобильный номер'
     )
 
@@ -150,30 +150,30 @@ class Order(models.Model):
         return self.address
 
 
-class OrderItems(models.Model):
+class OrderProduct(models.Model):
     order = models.ForeignKey(
         Order,
-        related_name='items',
+        related_name='products',
         verbose_name="заказ",
         on_delete=models.CASCADE,
     )
     product = models.ForeignKey(
         Product,
         on_delete=models.CASCADE,
-        related_name='order_items',
+        related_name='order_products',
         verbose_name='товар',
     )
-    count = models.PositiveIntegerField(
+    quantity = models.PositiveIntegerField(
         'количество',
         validators=[MinValueValidator(1)]
     )
 
     class Meta:
-        verbose_name = 'элементы заказа'
-        verbose_name_plural = 'элементы заказов'
+        verbose_name = 'товар в заказе'
+        verbose_name_plural = 'товары в заказе'
         unique_together = [
             ['order', 'product']
         ]
 
     def __str__(self):
-        return f"{self.product.name} - {self.count}"
+        return f"{self.product.name} - {self.quantity}"
