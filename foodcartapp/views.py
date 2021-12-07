@@ -74,7 +74,7 @@ class OrderProductSerializer(ModelSerializer):
 
 
 class OrderSerializer(ModelSerializer):
-    products = OrderProductSerializer(many=True, allow_empty=False)
+    products = OrderProductSerializer(many=True, allow_empty=False, write_only=True)
 
     class Meta:
         model = Order
@@ -100,6 +100,6 @@ def register_order(request):
             quantity=product_validated['quantity']
         )
 
-    content = {'order_id': order.id}
+    content = serializer.data
 
     return Response(content, status=status.HTTP_200_OK)
