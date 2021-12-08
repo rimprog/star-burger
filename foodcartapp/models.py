@@ -139,7 +139,11 @@ class Order(models.Model):
         max_length=50,
     )
     phonenumber = PhoneNumberField(
-        'мобильный номер'
+        'мобильный номер',
+    )
+    is_processed = models.BooleanField(
+        'заказ обработан',
+        default=False,
     )
 
     class Meta:
