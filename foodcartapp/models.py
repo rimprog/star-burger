@@ -125,6 +125,17 @@ class RestaurantMenuItem(models.Model):
         return f"{self.restaurant.name} - {self.product.name}"
 
 
+class OrderQuerySet(models.QuerySet):
+    def count_price(self):
+        orders_with_prices = self.annotate(
+            price=models.Sum(
+                models.F('products__product__price') * \
+                models.F('products__quantity')
+            )
+        )
+        return orders_with_prices
+
+
 class Order(models.Model):
     address = models.CharField(
         'адрес',
@@ -145,6 +156,8 @@ class Order(models.Model):
         'заказ обработан',
         default=False,
     )
+
+    objects = OrderQuerySet.as_manager()
 
     class Meta:
         verbose_name = 'заказ'

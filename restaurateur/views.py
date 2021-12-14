@@ -1,3 +1,4 @@
+
 from django import forms
 from django.shortcuts import redirect, render
 from django.views import View
@@ -97,7 +98,8 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders = Order.objects.filter(is_processed=False)
+    orders = Order.objects.filter(is_processed=False).count_price()
+
     return render(request, template_name='order_items.html', context={
         'orders': orders,
     })
