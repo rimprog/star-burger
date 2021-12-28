@@ -129,8 +129,7 @@ class OrderQuerySet(models.QuerySet):
     def count_price(self):
         orders_with_prices = self.annotate(
             price=models.Sum(
-                models.F('products__product__price') * \
-                models.F('products__quantity')
+                'products__price'
             )
         )
         return orders_with_prices
@@ -184,6 +183,14 @@ class OrderProduct(models.Model):
         'количество',
         validators=[MinValueValidator(1)]
     )
+    price = models.DecimalField(
+        'цена',
+        validators=[MinValueValidator(1)],
+        max_digits=8,
+        decimal_places=2,
+        default=None,
+        null=True
+    )
 
     class Meta:
         verbose_name = 'товар в заказе'
@@ -191,6 +198,11 @@ class OrderProduct(models.Model):
         unique_together = [
             ['order', 'product']
         ]
+
+    def count_price(self):
+        price = self.product.price * self.quantity
+
+        return price
 
     def __str__(self):
         return f"{self.product.name} - {self.quantity}"

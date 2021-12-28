@@ -94,11 +94,13 @@ def register_order(request):
     )
 
     for product_validated in serializer.validated_data['products']:
-        OrderProduct.objects.create(
+        order_product = OrderProduct.objects.create(
             order=order,
             product=product_validated['product'],
             quantity=product_validated['quantity']
         )
+        order_product.price = order_product.count_price()
+        order_product.save()
 
     content = serializer.data
 
