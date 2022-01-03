@@ -2,6 +2,10 @@ from django.contrib import admin
 from django.shortcuts import reverse
 from django.templatetags.static import static
 from django.utils.html import format_html
+from django.utils.encoding import iri_to_uri
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.http import HttpResponseRedirect
+from django.conf import settings
 
 from .models import Product
 from .models import ProductCategory
@@ -118,6 +122,18 @@ class OrderAdmin(admin.ModelAdmin):
     inlines = [
         OrderProductInline
     ]
+
+    def response_change(self, request, obj):
+        if 'next' in request.GET:
+            redirect_url = iri_to_uri(request.GET['next'])
+
+            if url_has_allowed_host_and_scheme(redirect_url, settings.ALLOWED_HOSTS):
+                return HttpResponseRedirect(redirect_url)
+            else:
+                raise Exception('Redirect url has not allowed host or scheme')
+
+        else:
+            return super(OrderAdmin, self).response_change(request, obj)
 
 
 @admin.register(OrderProduct)
