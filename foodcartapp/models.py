@@ -137,6 +137,10 @@ class OrderQuerySet(models.QuerySet):
 
 
 class Order(models.Model):
+    PAYMENT_METHOD_CHOICES = [
+        ('Epayment', 'Электронно'),
+        ('Cash', 'Наличностью')
+    ]
     IS_PROCESSED_CHOICES = [
         (True, 'Обработан'),
         (False, 'Необработанный')
@@ -155,6 +159,13 @@ class Order(models.Model):
     )
     phonenumber = PhoneNumberField(
         'мобильный номер',
+    )
+    payment_method = models.CharField(
+        'способ оплаты',
+        max_length=50,
+        choices=PAYMENT_METHOD_CHOICES,
+        default='Epayment',
+        db_index=True
     )
     is_processed = models.BooleanField(
         'заказ обработан',
