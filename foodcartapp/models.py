@@ -136,6 +136,10 @@ class OrderQuerySet(models.QuerySet):
 
 
 class Order(models.Model):
+    IS_PROCESSED_CHOICES = [
+        (True, 'Обработан'),
+        (False, 'Необработанный')
+    ]
     address = models.CharField(
         'адрес',
         max_length=100,
@@ -153,7 +157,9 @@ class Order(models.Model):
     )
     is_processed = models.BooleanField(
         'заказ обработан',
+        choices=IS_PROCESSED_CHOICES,
         default=False,
+        db_index=True
     )
 
     objects = OrderQuerySet.as_manager()
