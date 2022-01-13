@@ -8,8 +8,10 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
 
-
-from foodcartapp.models import Product, Restaurant, Order
+from foodcartapp.models import Product
+from foodcartapp.models import Restaurant
+from foodcartapp.models import RestaurantMenuItem
+from foodcartapp.models import Order
 
 
 class Login(forms.Form):
@@ -98,7 +100,19 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders = Order.objects.filter(is_processed=False).count_price()
+    orders = Order.objects.filter(is_processed=False).prefetch_related('order_products', 'order_products__product').count_price()
+
+    restaurant_menu_items = RestaurantMenuItem.objects.select_related('product', 'restaurant')
+
+    for order in orders:
+        restaurants_that_can_prepare_order_by_products = []
+        for order_product in order.order_products.all():
+            restaurants_with_required_product_in_menu = [restaurant_menu_item.restaurant for restaurant_menu_item in restaurant_menu_items if restaurant_menu_item.product==order_product.product]
+            restaurants_that_can_prepare_order_by_products.append(restaurants_with_required_product_in_menu)
+
+        restaurants_that_can_prepare_order = set.intersection(*map(set, restaurants_that_can_prepare_order_by_products))
+
+        order.restaurants = restaurants_that_can_prepare_order
 
     return render(request, template_name='order_items.html', context={
         'orders': orders,

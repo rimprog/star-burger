@@ -130,7 +130,7 @@ class OrderQuerySet(models.QuerySet):
     def count_price(self):
         orders_with_prices = self.annotate(
             price=models.Sum(
-                'products__price'
+                'order_products__price'
             )
         )
         return orders_with_prices
@@ -200,6 +200,15 @@ class Order(models.Model):
         null=True,
         db_index=True
     )
+    restaurant = models.ForeignKey(
+        Restaurant,
+        verbose_name='ресторан',
+        related_name='orders',
+        on_delete=models.PROTECT,
+        blank=True,
+        null=True,
+        default=None
+    )
 
     objects = OrderQuerySet.as_manager()
 
@@ -214,7 +223,7 @@ class Order(models.Model):
 class OrderProduct(models.Model):
     order = models.ForeignKey(
         Order,
-        related_name='products',
+        related_name='order_products',
         verbose_name="заказ",
         on_delete=models.CASCADE,
     )
