@@ -5,6 +5,7 @@ from django.conf import settings
 from django.shortcuts import redirect, render
 from django.views import View
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.contrib.auth.decorators import user_passes_test
 
 from django.contrib.auth import authenticate, login
@@ -14,6 +15,8 @@ from foodcartapp.models import Product
 from foodcartapp.models import Restaurant
 from foodcartapp.models import RestaurantMenuItem
 from foodcartapp.models import Order
+
+from geocoderapp.models import Place
 
 import requests
 from geopy import distance
@@ -121,14 +124,30 @@ def fetch_coordinates(apikey, address):
     return lat, lon
 
 
+def get_or_create_place(address):
+    try:
+        place = Place.objects.get(address=address)
+    except Place.DoesNotExist:
+        place_coordinates = fetch_coordinates(
+            settings.YANDEX_GEOCODER_TOKEN,
+            address
+        )
+        place = Place.objects.create(
+            address=address,
+            latitude=place_coordinates[0],
+            longitude=place_coordinates[1],
+            refreshed_at=timezone.now()
+        )
+
+    return place
+
+
 def add_distance_to_restaurant(restaurants, order_coordinates):
     restaurants_with_distances = []
 
     for restaurant in restaurants:
-        restaurant_coordinates = fetch_coordinates(
-            settings.YANDEX_GEOCODER_TOKEN,
-            restaurant.address
-        )
+        place = get_or_create_place(restaurant.address)
+        restaurant_coordinates = (place.latitude, place.longitude)
 
         restaurant.distance_to_order_address = round(
             distance.distance(restaurant_coordinates, order_coordinates).km, 3
@@ -155,10 +174,9 @@ def view_orders(request):
     restaurant_menu_items = RestaurantMenuItem.objects.select_related('product', 'restaurant')
 
     for order in orders:
-        order.coordinates = fetch_coordinates(
-            settings.YANDEX_GEOCODER_TOKEN,
-            order.address
-        )
+        place = get_or_create_place(order.address)
+
+        order.coordinates = (place.latitude, place.longitude)
 
         restaurants_that_can_prepare_order_by_products = []
         for order_product in order.order_products.all():
