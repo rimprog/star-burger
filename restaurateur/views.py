@@ -7,6 +7,7 @@ from django.views import View
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.contrib.auth.decorators import user_passes_test
+from django.core.exceptions import FieldError
 
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
@@ -124,29 +125,60 @@ def fetch_coordinates(apikey, address):
     return lat, lon
 
 
-def get_or_create_place(address):
-    try:
-        place = Place.objects.get(address=address)
-    except Place.DoesNotExist:
-        place_coordinates = fetch_coordinates(
-            settings.YANDEX_GEOCODER_TOKEN,
-            address
-        )
-        place = Place.objects.create(
-            address=address,
-            latitude=place_coordinates[0],
-            longitude=place_coordinates[1],
-            refreshed_at=timezone.now()
-        )
+def fetch_place(address):
+    place_coordinates = fetch_coordinates(
+        settings.YANDEX_GEOCODER_TOKEN,
+        address
+    )
+
+    place = Place(
+        address=address,
+        latitude=place_coordinates[0],
+        longitude=place_coordinates[1],
+        refreshed_at=timezone.now()
+    )
 
     return place
 
 
-def add_distance_to_restaurant(restaurants, order_coordinates):
+def find_not_created_places_for_items_with_addresses(items):
+    places_addresses = Place.objects.values('address')
+
+    try:
+        not_created_places_for_items = items.exclude(address__in=places_addresses)
+        not_created_places_addresses = not_created_places_for_items.values('address').distinct()
+    except FieldError:
+        not_created_places_for_items = items.exclude(restaurant__address__in=places_addresses)
+        not_created_places_addresses = not_created_places_for_items.values('restaurant__address').distinct()
+
+    return not_created_places_addresses
+
+
+def bulk_create_places_by_addresses(place_addresses):
+    places = []
+    for place_address in place_addresses:
+        try:
+            place = fetch_place(place_address['address'])
+        except KeyError:
+            place = fetch_place(place_address['restaurant__address'])
+
+        places.append(place)
+
+    created_places = Place.objects.bulk_create(places)
+
+    return created_places
+
+
+def add_distance_to_restaurant(restaurants, order_coordinates, places):
     restaurants_with_distances = []
 
     for restaurant in restaurants:
-        place = get_or_create_place(restaurant.address)
+        place = list(
+            filter(
+                lambda place: place.address == restaurant.address,
+                places
+            )
+        )[0]
         restaurant_coordinates = (place.latitude, place.longitude)
 
         restaurant.distance_to_order_address = round(
@@ -173,8 +205,21 @@ def view_orders(request):
 
     restaurant_menu_items = RestaurantMenuItem.objects.select_related('product', 'restaurant')
 
+    not_created_places_addresses = find_not_created_places_for_items_with_addresses(orders)
+    bulk_create_places_by_addresses(not_created_places_addresses)
+
+    not_created_places_addresses = find_not_created_places_for_items_with_addresses(restaurant_menu_items)
+    bulk_create_places_by_addresses(not_created_places_addresses)
+
+    places = Place.objects.all()
+
     for order in orders:
-        place = get_or_create_place(order.address)
+        place = list(
+            filter(
+                lambda place: place.address == order.address,
+                places
+            )
+        )[0]
 
         order.coordinates = (place.latitude, place.longitude)
 
@@ -187,7 +232,8 @@ def view_orders(request):
 
         restaurants_with_distance = add_distance_to_restaurant(
             restaurants_that_can_prepare_order,
-            order.coordinates
+            order.coordinates,
+            places
         )
 
         order.restaurants = restaurants_with_distance
