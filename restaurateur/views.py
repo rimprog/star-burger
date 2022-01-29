@@ -131,14 +131,15 @@ def fetch_place(address):
         address
     )
 
-    place = Place(
-        address=address,
-        latitude=place_coordinates[0],
-        longitude=place_coordinates[1],
-        refreshed_at=timezone.now()
-    )
+    if place_coordinates:
+        place = Place(
+            address=address,
+            latitude=place_coordinates[0],
+            longitude=place_coordinates[1],
+            refreshed_at=timezone.now()
+        )
 
-    return place
+        return place
 
 
 def find_not_created_places_for_items_with_addresses(items):
@@ -162,7 +163,8 @@ def bulk_create_places_by_addresses(place_addresses):
         except KeyError:
             place = fetch_place(place_address['restaurant__address'])
 
-        places.append(place)
+        if place:
+            places.append(place)
 
     created_places = Place.objects.bulk_create(places)
 
@@ -197,6 +199,17 @@ def add_distance_to_restaurant(restaurants, order_coordinates, places):
     return sorted_restaurants_with_distances
 
 
+def find_restaurants_that_can_prepare_order(order, restaurant_menu_items):
+    restaurants_that_can_prepare_order_by_products = []
+    for order_product in order.order_products.all():
+        restaurants_with_required_product_in_menu = [restaurant_menu_item.restaurant for restaurant_menu_item in restaurant_menu_items if restaurant_menu_item.product==order_product.product]
+        restaurants_that_can_prepare_order_by_products.append(restaurants_with_required_product_in_menu)
+
+    restaurants_that_can_prepare_order = set.intersection(*map(set, restaurants_that_can_prepare_order_by_products))
+
+    return restaurants_that_can_prepare_order
+
+
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
     orders = Order.objects.filter(is_processed=False) \
@@ -214,29 +227,31 @@ def view_orders(request):
     places = Place.objects.all()
 
     for order in orders:
-        place = list(
-            filter(
-                lambda place: place.address == order.address,
+        try:
+            place = list(
+                filter(
+                    lambda place: place.address == order.address,
+                    places
+                )
+            )[0]
+
+            order.coordinates = (place.latitude, place.longitude)
+
+            restaurants_that_can_prepare_order = find_restaurants_that_can_prepare_order(
+                order,
+                restaurant_menu_items
+            )
+
+            restaurants_with_distance = add_distance_to_restaurant(
+                restaurants_that_can_prepare_order,
+                order.coordinates,
                 places
             )
-        )[0]
 
-        order.coordinates = (place.latitude, place.longitude)
+            order.restaurants = restaurants_with_distance
 
-        restaurants_that_can_prepare_order_by_products = []
-        for order_product in order.order_products.all():
-            restaurants_with_required_product_in_menu = [restaurant_menu_item.restaurant for restaurant_menu_item in restaurant_menu_items if restaurant_menu_item.product==order_product.product]
-            restaurants_that_can_prepare_order_by_products.append(restaurants_with_required_product_in_menu)
-
-        restaurants_that_can_prepare_order = set.intersection(*map(set, restaurants_that_can_prepare_order_by_products))
-
-        restaurants_with_distance = add_distance_to_restaurant(
-            restaurants_that_can_prepare_order,
-            order.coordinates,
-            places
-        )
-
-        order.restaurants = restaurants_with_distance
+        except IndexError:
+            order.restaurants = 'coordinates_error'
 
     return render(request, template_name='order_items.html', context={
         'orders': orders,

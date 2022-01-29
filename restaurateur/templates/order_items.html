@@ -40,7 +40,9 @@
           <details>
             <summary>Раскрыть</summary>
             <ul>
-              {% if order.restaurants %}
+              {% if order.restaurants == 'coordinates_error' %}
+                <span>Геокодер не смог получить координаты. Проверьте корректность адреса.</span>
+              {% elif order.restaurants %}
                 {% for restaurant in order.restaurants %}
                     <li>{{restaurant}} - {{restaurant.distance_to_order_address}} км.</li>
                 {% endfor %}
