@@ -139,7 +139,8 @@ class OrderQuerySet(models.QuerySet):
 class Order(models.Model):
     PAYMENT_METHOD_CHOICES = [
         ('Epayment', 'Электронно'),
-        ('Cash', 'Наличностью')
+        ('Cash', 'Наличностью'),
+        ('None', 'Не указано')
     ]
     IS_PROCESSED_CHOICES = [
         (True, 'Обработан'),
@@ -166,7 +167,7 @@ class Order(models.Model):
         'способ оплаты',
         max_length=50,
         choices=PAYMENT_METHOD_CHOICES,
-        default='Epayment',
+        default='None',
         db_index=True
     )
     is_processed = models.BooleanField(
