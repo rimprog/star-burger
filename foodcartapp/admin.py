@@ -133,7 +133,7 @@ class OrderAdmin(admin.ModelAdmin):
                 raise Exception('Redirect url has not allowed host or scheme')
 
         else:
-            return super(OrderAdmin, self).response_change(request, obj)
+            return super().response_change(request, obj)
 
 
 @admin.register(OrderProduct)
