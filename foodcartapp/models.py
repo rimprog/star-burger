@@ -148,6 +148,7 @@ class Order(models.Model):
     address = models.CharField(
         'адрес',
         max_length=100,
+        db_index=True
     )
     firstname = models.CharField(
         'имя',
@@ -159,6 +160,7 @@ class Order(models.Model):
     )
     phonenumber = PhoneNumberField(
         'мобильный номер',
+        db_index=True
     )
     payment_method = models.CharField(
         'способ оплаты',
