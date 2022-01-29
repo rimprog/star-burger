@@ -113,6 +113,36 @@ def find_restaurants_that_can_prepare_order(order, restaurant_menu_items):
     return restaurants_that_can_prepare_order
 
 
+def append_restaurants_with_distance_to_order(order, places, restaurant_menu_items):
+    try:
+        place = list(
+            filter(
+                lambda place: place.address == order.address,
+                places
+            )
+        )[0]
+
+        order.coordinates = (place.latitude, place.longitude)
+
+        restaurants_that_can_prepare_order = find_restaurants_that_can_prepare_order(
+            order,
+            restaurant_menu_items
+        )
+
+        restaurants_with_distance = add_distance_to_restaurant(
+            restaurants_that_can_prepare_order,
+            order.coordinates,
+            places
+        )
+
+        order.restaurants = restaurants_with_distance
+
+    except IndexError:
+        order.restaurants = 'coordinates_error'
+
+    return order
+
+
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
     orders = Order.objects.filter(is_processed=False) \
@@ -130,31 +160,7 @@ def view_orders(request):
     places = Place.objects.all()
 
     for order in orders:
-        try:
-            place = list(
-                filter(
-                    lambda place: place.address == order.address,
-                    places
-                )
-            )[0]
-
-            order.coordinates = (place.latitude, place.longitude)
-
-            restaurants_that_can_prepare_order = find_restaurants_that_can_prepare_order(
-                order,
-                restaurant_menu_items
-            )
-
-            restaurants_with_distance = add_distance_to_restaurant(
-                restaurants_that_can_prepare_order,
-                order.coordinates,
-                places
-            )
-
-            order.restaurants = restaurants_with_distance
-
-        except IndexError:
-            order.restaurants = 'coordinates_error'
+        order = append_restaurants_with_distance_to_order(order, places, restaurant_menu_items)
 
     return render(request, template_name='order_items.html', context={
         'orders': orders,
