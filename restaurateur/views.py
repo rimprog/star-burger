@@ -203,7 +203,7 @@ def view_orders(request):
                           .prefetch_related('order_products', 'order_products__product') \
                           .count_price()
 
-    restaurant_menu_items = RestaurantMenuItem.objects.select_related('product', 'restaurant')
+    restaurant_menu_items = RestaurantMenuItem.objects.filter(availability=True).select_related('product', 'restaurant')
 
     not_created_places_addresses = find_not_created_places_for_items_with_addresses(orders)
     bulk_create_places_by_addresses(not_created_places_addresses)
