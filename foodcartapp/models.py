@@ -242,8 +242,6 @@ class OrderProduct(models.Model):
         validators=[MinValueValidator(1)],
         max_digits=8,
         decimal_places=2,
-        default=None,
-        null=True
     )
 
     class Meta:
