@@ -132,10 +132,11 @@ def fetch_place(address):
     )
 
     if place_coordinates:
+        lat, lon = place_coordinates
         place = Place(
             address=address,
-            latitude=place_coordinates[0],
-            longitude=place_coordinates[1],
+            latitude=lat,
+            longitude=lon,
             refreshed_at=timezone.now()
         )
 
