@@ -22,8 +22,6 @@ class Place(models.Model):
     refreshed_at = models.DateTimeField(
         'обновлено',
         default=timezone.now,
-        blank=True,
-        null=True,
         db_index=True
     )
 

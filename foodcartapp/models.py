@@ -184,8 +184,6 @@ class Order(models.Model):
     registrated_at = models.DateTimeField(
         'Когда зарегистрирован',
         default=timezone.now,
-        blank=True,
-        null=True,
         db_index=True
     )
     called_at = models.DateTimeField(
