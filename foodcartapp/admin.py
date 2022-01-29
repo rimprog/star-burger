@@ -124,16 +124,15 @@ class OrderAdmin(admin.ModelAdmin):
     ]
 
     def response_change(self, request, obj):
-        if 'next' in request.GET:
-            redirect_url = iri_to_uri(request.GET['next'])
-
-            if url_has_allowed_host_and_scheme(redirect_url, settings.ALLOWED_HOSTS):
-                return HttpResponseRedirect(redirect_url)
-            else:
-                raise Exception('Redirect url has not allowed host or scheme')
-
-        else:
+        if 'next' not in request.GET:
             return super().response_change(request, obj)
+
+        redirect_url = iri_to_uri(request.GET['next'])
+
+        if url_has_allowed_host_and_scheme(redirect_url, settings.ALLOWED_HOSTS):
+            return HttpResponseRedirect(redirect_url)
+        else:
+            raise Exception('Redirect url has not allowed host or scheme')
 
 
 @admin.register(OrderProduct)
