@@ -180,7 +180,6 @@ class Order(models.Model):
         'комментарий',
         default='',
         blank=True,
-        null=True,
     )
     registrated_at = models.DateTimeField(
         'Когда зарегистрирован',
