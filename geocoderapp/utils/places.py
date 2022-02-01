@@ -24,15 +24,10 @@ def fetch_place(address):
         return place
 
 
-def find_not_created_places_for_items_with_addresses(items):
-    places_addresses = Place.objects.values('address')
-
-    try:
-        not_created_places_for_items = items.exclude(address__in=places_addresses)
-        not_created_places_addresses = not_created_places_for_items.values('address').distinct()
-    except FieldError:
-        not_created_places_for_items = items.exclude(restaurant__address__in=places_addresses)
-        not_created_places_addresses = not_created_places_for_items.values('restaurant__address').distinct()
+def find_not_created_places_for_needed_addresses(needed_addresses):
+    created_places_for_needed_addresses = Place.objects.filter(address__in=needed_addresses)
+    created_places_addresses_for_needed_addresses = [place.address for place in created_places_for_needed_addresses]
+    not_created_places_addresses = [address for address in needed_addresses if address not in created_places_addresses_for_needed_addresses]
 
     return not_created_places_addresses
 
@@ -40,10 +35,7 @@ def find_not_created_places_for_items_with_addresses(items):
 def bulk_create_places_by_addresses(place_addresses):
     places = []
     for place_address in place_addresses:
-        try:
-            place = fetch_place(place_address['address'])
-        except KeyError:
-            place = fetch_place(place_address['restaurant__address'])
+        place = fetch_place(place_address)
 
         if place:
             places.append(place)

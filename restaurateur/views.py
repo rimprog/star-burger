@@ -15,7 +15,7 @@ from foodcartapp.models import Order
 from restaurateur.utils.restaurants import append_restaurants_with_distance_to_order
 
 from geocoderapp.models import Place
-from geocoderapp.utils.places import find_not_created_places_for_items_with_addresses
+from geocoderapp.utils.places import find_not_created_places_for_needed_addresses
 from geocoderapp.utils.places import bulk_create_places_by_addresses
 
 
@@ -111,11 +111,13 @@ def view_orders(request):
 
     restaurant_menu_items = RestaurantMenuItem.objects.filter(availability=True).select_related('product', 'restaurant')
 
-    not_created_places_addresses = find_not_created_places_for_items_with_addresses(orders)
+    needed_orders_addresses = [order.address for order in orders]
+    needed_restaurants_addresses = [restaurant_menu_item.restaurant.address for restaurant_menu_item in restaurant_menu_items]
+    needed_addresses = set(needed_orders_addresses + needed_restaurants_addresses)
+
+    not_created_places_addresses = find_not_created_places_for_needed_addresses(needed_addresses)
     bulk_create_places_by_addresses(not_created_places_addresses)
 
-    not_created_places_addresses = find_not_created_places_for_items_with_addresses(restaurant_menu_items)
-    bulk_create_places_by_addresses(not_created_places_addresses)
 
     places = Place.objects.all()
 
