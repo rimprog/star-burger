@@ -251,10 +251,5 @@ class OrderProduct(models.Model):
             ['order', 'product']
         ]
 
-    def count_price(self):
-        price = self.product.price * self.quantity
-
-        return price
-
     def __str__(self):
         return f"{self.product.name} - {self.quantity}"
