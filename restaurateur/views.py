@@ -12,10 +12,11 @@ from foodcartapp.models import Restaurant
 from foodcartapp.models import RestaurantMenuItem
 from foodcartapp.models import Order
 
+from restaurateur.utils.restaurants import append_restaurants_with_distance_to_order
+
 from geocoderapp.models import Place
-from geocoderapp.views import find_not_created_places_for_items_with_addresses
-from geocoderapp.views import bulk_create_places_by_addresses
-from geocoderapp.views import add_distance_to_restaurant
+from geocoderapp.utils.places import find_not_created_places_for_items_with_addresses
+from geocoderapp.utils.places import bulk_create_places_by_addresses
 
 
 class Login(forms.Form):
@@ -100,47 +101,6 @@ def view_restaurants(request):
     return render(request, template_name="restaurants_list.html", context={
         'restaurants': Restaurant.objects.all(),
     })
-
-
-def find_restaurants_that_can_prepare_order(order, restaurant_menu_items):
-    restaurants_that_can_prepare_order_by_products = []
-    for order_product in order.order_products.all():
-        restaurants_with_required_product_in_menu = [restaurant_menu_item.restaurant for restaurant_menu_item in restaurant_menu_items if restaurant_menu_item.product==order_product.product]
-        restaurants_that_can_prepare_order_by_products.append(restaurants_with_required_product_in_menu)
-
-    restaurants_that_can_prepare_order = set.intersection(*map(set, restaurants_that_can_prepare_order_by_products))
-
-    return restaurants_that_can_prepare_order
-
-
-def append_restaurants_with_distance_to_order(order, places, restaurant_menu_items):
-    try:
-        place = list(
-            filter(
-                lambda place: place.address == order.address,
-                places
-            )
-        )[0]
-
-        order.coordinates = (place.latitude, place.longitude)
-
-        restaurants_that_can_prepare_order = find_restaurants_that_can_prepare_order(
-            order,
-            restaurant_menu_items
-        )
-
-        restaurants_with_distance = add_distance_to_restaurant(
-            restaurants_that_can_prepare_order,
-            order.coordinates,
-            places
-        )
-
-        order.restaurants = restaurants_with_distance
-
-    except IndexError:
-        order.restaurants = 'coordinates_error'
-
-    return order
 
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
