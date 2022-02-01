@@ -130,6 +130,7 @@ class OrderAdmin(admin.ModelAdmin):
         redirect_url = iri_to_uri(request.GET['next'])
 
         if url_has_allowed_host_and_scheme(redirect_url, settings.ALLOWED_HOSTS):
+            super().response_change(request, obj)
             return HttpResponseRedirect(redirect_url)
         else:
             raise Exception('Redirect url has not allowed host or scheme')
@@ -140,5 +141,5 @@ class OrderProductAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         if not change:
             obj.price = obj.product.price * obj.quantity
-            
+
         super().save_model(request, obj, form, change)
