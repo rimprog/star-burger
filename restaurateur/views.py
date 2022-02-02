@@ -116,10 +116,9 @@ def view_orders(request):
     needed_addresses = set(needed_orders_addresses + needed_restaurants_addresses)
 
     not_created_places_addresses = find_not_created_places_for_needed_addresses(needed_addresses)
-    bulk_create_places_by_addresses(not_created_places_addresses)
+    created_places = bulk_create_places_by_addresses(not_created_places_addresses)
 
-
-    places = Place.objects.all()
+    places = Place.objects.filter(address__in=needed_addresses)
 
     for order in orders:
         order = append_restaurants_with_distance_to_order(order, places, restaurant_menu_items)
