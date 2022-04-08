@@ -54,7 +54,7 @@ def product_list_api(request):
             'category': {
                 'id': product.category.id,
                 'name': product.category.name,
-            },
+            } if product.category else None,
             'image': product.image.url,
             'restaurant': {
                 'id': product.id,
