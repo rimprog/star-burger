@@ -144,6 +144,14 @@ Parcel будет следить за файлами в каталоге `bundle
 - `SECRET_KEY` — секретный ключ проекта. Он отвечает за шифрование на сайте. Например, им зашифрованы все пароли на вашем сайте. Не стоит использовать значение по-умолчанию, **замените на своё**.
 - `ALLOWED_HOSTS` — [см. документацию Django](https://docs.djangoproject.com/en/3.1/ref/settings/#allowed-hosts)
 
+Настроить PostgreSQL на сервере:
+- Создайте бэкап sqlite бд командой `python3 manage.py dumpdata --exclude auth.permission --exclude contenttypes > db.json`. Подробнее про [dumpdata](https://docs.djangoproject.com/en/3.1/ref/django-admin/#dumpdata) и [создание бэкапа sqlite](https://coderwall.com/p/mvsoyg/django-dumpdata-and-loaddata).
+- Установите [postgresql](https://www.digitalocean.com/community/tutorials/how-to-use-postgresql-with-your-django-application-on-ubuntu-14-04).
+- Создайте новую базу данных и пользователя, свяжите их вместе. [Инструкция](https://www.digitalocean.com/community/tutorials/how-to-use-postgresql-with-your-django-application-on-ubuntu-14-04#create-a-database-and-database-user).
+- В `.env` добавьте переменную `DATABASE_URL=YOUR_POSTGRES_DATABASE_URL`. О том как сформировать требуемый url написано [тут](https://github.com/jazzband/dj-database-url#url-schema).
+- Отмигрируйте базу данных командой `python manage.py migrate`
+- Загрузите в новую БД данные из созданного в первом шаге бэкапа командой `python3 manage.py loaddata db.json`. Подробнее про [loaddata](https://docs.djangoproject.com/en/3.1/ref/django-admin/#loaddata).
+
 ### Как добавить логирование ошибок в rollbar
 
 * Зарегистрируйтесь в [rollbar](https://rollbar.com/).
