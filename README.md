@@ -152,6 +152,8 @@ Parcel будет следить за файлами в каталоге `bundle
 * На вкладке `Integrate SDK` возьмите выведенную на экран переменную `access_token` из словаря `ROLLBAR` и положите ее в переменную `ROLLBAR_POST_SERVER_ITEM_ACCESS_TOKEN` файла `.env` вашего проекта.
 * Добавьте команды `import rollbar` и `rollbar.init(**ROLLBAR)` в конец settings.py текущего django проекта.
 * На вкладке `Integrate SDK` выполните инструкции из блока `Send a test message:`
+* Если подключение rollbar прошло успешно, удалите команды `import rollbar` и `rollbar.init(**ROLLBAR)` в конце settings.py текущего django проекта.
+* В файла `.env` вашего проекта укажите переменную `ROLLBAR_ENVIRONMENT_NAME` для определения окружения текущего проекта. По умолчанию стоит `development`
 
 ## Цели проекта
 
