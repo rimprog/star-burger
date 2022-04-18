@@ -54,11 +54,12 @@ python -m venv venv
 pip install -r requirements.txt
 ```
 
-Создайте файл базы данных SQLite и отмигрируйте её следующей командой:
+Настройте к работе СУБД PostgreSQL:
+- Установите [postgresql](https://www.digitalocean.com/community/tutorials/how-to-use-postgresql-with-your-django-application-on-ubuntu-14-04).
+- Создайте новую базу данных и пользователя, свяжите их вместе. [Инструкция](https://www.digitalocean.com/community/tutorials/how-to-use-postgresql-with-your-django-application-on-ubuntu-14-04#create-a-database-and-database-user).
+- Создайте файл `.env` переменных окружения проекта, куда добавьте переменную `DATABASE_URL=YOUR_POSTGRES_DATABASE_URL`. О том как сформировать требуемый url написано [тут](https://github.com/jazzband/dj-database-url#url-schema).
+- Отмигрируйте базу данных командой `python manage.py migrate`
 
-```sh
-python manage.py migrate
-```
 
 Запустите сервер:
 
