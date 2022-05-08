@@ -152,6 +152,12 @@ Parcel будет следить за файлами в каталоге `bundle
 - Отмигрируйте базу данных командой `python manage.py migrate`
 - Загрузите в новую БД данные из созданного в первом шаге бэкапа командой `python3 manage.py loaddata db.json`. Подробнее про [loaddata](https://docs.djangoproject.com/en/3.1/ref/django-admin/#loaddata).
 
+Собрать всю необходимую статику:
+
+```sh
+python manage.py collectstatic
+```
+
 ### Как добавить логирование ошибок в rollbar
 
 * Зарегистрируйтесь в [rollbar](https://rollbar.com/).
@@ -162,7 +168,35 @@ Parcel будет следить за файлами в каталоге `bundle
 * Добавьте команды `import rollbar` и `rollbar.init(**ROLLBAR)` в конец settings.py текущего django проекта.
 * На вкладке `Integrate SDK` выполните инструкции из блока `Send a test message:`
 * Если подключение rollbar прошло успешно, удалите команды `import rollbar` и `rollbar.init(**ROLLBAR)` в конце settings.py текущего django проекта.
-* В файла `.env` вашего проекта укажите переменную `ROLLBAR_ENVIRONMENT_NAME` для определения окружения текущего проекта. По умолчанию стоит `development`
+* В файла `.env` вашего проекта укажите переменную `ROLLBAR_ENVIRONMENT_NAME` для определения окружения текущего проекта. По умолчанию стоит `development`.
+
+##  Инструкция по быстрому обновлению кода на сервере
+* В корневой папке пользователя сервера [создайте bash script](https://losst.ru/napisanie-skriptov-na-bash).
+* Наполните скрипт необходимыми командами по автоматизации процесса развертывания кода на сервере.
+* Сделайте созданный файл скрипта исполняемым, командой `chmod ugo+x файл_скрипта`.
+* Выполните команду `./файл_скрипта` чтобы запустить скрипт.
+
+Пример файла скрипта с необходимыми командами и выводом статуса процесса развертывания:
+```sh
+#!/usr/bin/env bash
+echo -e "\033[42mStart git pull\033[0m"
+cd ../opt/starburger && git pull
+echo  -e "\033[42mStart install Python libraries\033[0m"
+source venv/bin/activate && pip install -r requirements.txt
+echo -e "\033[42mStart install Node.js libraries\033[0m"
+npm ci --dev
+echo -e "\033[42mRebuild frontend\033[0m"
+./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
+echo -e "\033[42mCollect static\033[0m"
+python manage.py collectstatic --no-input
+echo -e "\033[42mMigrate database\033[0m"
+python manage.py migrate
+echo -e "\033[42mRestart starburger service\033[0m"
+systemctl restart starburger.service
+echo -e "\033[42mReload nginx service\033[0m"
+systemctl reload nginx.service
+echo -e "\033[42mDeploy process finish successefully!\033[0m"
+```
 
 ## Цели проекта
 
