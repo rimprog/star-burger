@@ -149,7 +149,7 @@ Parcel будет следить за файлами в каталоге `bundle
 - Установите [postgresql](https://www.digitalocean.com/community/tutorials/how-to-use-postgresql-with-your-django-application-on-ubuntu-14-04).
 - Создайте новую базу данных и пользователя, свяжите их вместе. [Инструкция](https://www.digitalocean.com/community/tutorials/how-to-use-postgresql-with-your-django-application-on-ubuntu-14-04#create-a-database-and-database-user).
 - В `.env` добавьте переменную `DATABASE_URL=YOUR_POSTGRES_DATABASE_URL`. О том как сформировать требуемый url написано [тут](https://github.com/jazzband/dj-database-url#url-schema).
-- Отмигрируйте базу данных командой `python manage.py migrate`
+- Отмигрируйте базу данных командой `python manage.py migrate`.
 - Загрузите в новую БД данные из созданного в первом шаге бэкапа командой `python3 manage.py loaddata db.json`. Подробнее про [loaddata](https://docs.djangoproject.com/en/3.1/ref/django-admin/#loaddata).
 
 Собрать всю необходимую статику:
