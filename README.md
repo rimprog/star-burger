@@ -198,6 +198,12 @@ systemctl reload nginx.service
 echo -e "\033[42mDeploy process finish successefully!\033[0m"
 ```
 
+##  Для проверки урока
+* домен: `starburger.riminprog.ru`
+* IP: `79.143.30.162`
+* имя пользователя: `root`
+* место нахождения деплойного скрипта: `/root`
+
 ## Цели проекта
 
 Код написан в учебных целях — это урок в курсе по Python и веб-разработке на сайте [Devman](https://dvmn.org). За основу был взят код проекта [FoodCart](https://github.com/Saibharath79/FoodCart).
