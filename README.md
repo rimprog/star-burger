@@ -13,6 +13,17 @@
 
 Третий интерфейс — это админка. Преимущественно им пользуются программисты при разработке сайта. Также сюда заходит менеджер, чтобы обновить меню ресторанов Star Burger.
 
+## Переменные окружения
+
+Необходимые для корректной работы сайта токены берутся из переменных окружения, хранящихся в `.env` файле. В зависимости от запуска `dev` или `prod` версии сайта, переменные будут различаться. Ниже перечислены все возможные переменные и их назначение вне зависимости от версии сайта:
+- `SECRET_KEY` - секретный ключ проекта. Он отвечает за шифрование на сайте. Например, им зашифрованы все пароли на вашем сайте. Не стоит использовать значение по-умолчанию. [Подробнее в документации Django](https://docs.djangoproject.com/en/2.2/ref/settings/#secret-key).
+- `ALLOWED_HOSTS` - список ip адресов и доменных имен с которых возможен запуск текущего django проекта. [Подробнее в документации Django](https://docs.djangoproject.com/en/3.1/ref/settings/#allowed-hosts).
+- `DEBUG` - настройка указывающая включен ли режим отладки. [Подробнее в документации Django](https://docs.djangoproject.com/en/3.1/ref/settings/#debug).
+- `YANDEX_GEOCODER_TOKEN` - токен используемый для подключения к сервису геокодера по api. [Api key геокодера яндекса](https://developer.tech.yandex.ru/services/3/).
+- `ROLLBAR_POST_SERVER_ITEM_ACCESS_TOKEN` - токен `post_server_item` вашего проекта, добавленного в rollbar. [Подробнее в rollbar docs](https://explorer.docs.rollbar.com/#section/Authentication/Project-access-tokens).
+- `ROLLBAR_ENVIRONMENT_NAME` - наименование окружения проекта к которому подключен rollbar. [Подробнее в документации rollbar](https://docs.rollbar.com/docs/environments).
+- `DATABASE_URL` - доступ на подключение к базе данных упакованный в один url. [Подробнее тут](https://github.com/jazzband/dj-database-url#url-schema).
+
 ## Как запустить dev-версию сайта
 
 Для запуска сайта нужно запустить **одновременно** бэкенд и фронтенд, в двух терминалах.
@@ -142,7 +153,8 @@ Parcel будет следить за файлами в каталоге `bundle
 
 - `DEBUG` — дебаг-режим. Поставьте `False`.
 - `SECRET_KEY` — секретный ключ проекта. Он отвечает за шифрование на сайте. Например, им зашифрованы все пароли на вашем сайте. Не стоит использовать значение по-умолчанию, **замените на своё**.
-- `ALLOWED_HOSTS` — [см. документацию Django](https://docs.djangoproject.com/en/3.1/ref/settings/#allowed-hosts)
+- `ALLOWED_HOSTS` — [см. документацию Django](https://docs.djangoproject.com/en/3.1/ref/settings/#allowed-hosts). Поставьте хосты, с которых будет запускаться сайт.
+- `YANDEX_GEOCODER_TOKEN` - [Api key геокодера яндекса](https://developer.tech.yandex.ru/services/3/). Получите и вставьте токен.
 
 Настроить PostgreSQL на сервере:
 - Создайте бэкап sqlite бд командой `python3 manage.py dumpdata --exclude auth.permission --exclude contenttypes > db.json`. Подробнее про [dumpdata](https://docs.djangoproject.com/en/3.1/ref/django-admin/#dumpdata) и [создание бэкапа sqlite](https://coderwall.com/p/mvsoyg/django-dumpdata-and-loaddata).
