@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+set -e
+
 echo -e "\033[42mGet environments\033[0m"
 set -a &&  . ../opt/starburger/.env && set +a
 
@@ -16,7 +18,7 @@ echo -e "\033[42mRebuild frontend\033[0m"
 echo -e "\033[42mCollect static\033[0m"
 python manage.py collectstatic --no-input
 echo -e "\033[42mMigrate database\033[0m"
-python manage.py migrate
+python manage.py migrate --no-input
 
 echo -e "\033[42mRestart starburger service\033[0m"
 systemctl restart starburger.service
